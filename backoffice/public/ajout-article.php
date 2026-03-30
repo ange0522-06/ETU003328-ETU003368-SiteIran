@@ -346,7 +346,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="button" onclick="showPreview()">Aperçu</button>
+            <button type="button" onclick="showHTML()">Voir le HTML</button>
             <button type="submit">Enregistrer</button>
         </form>
         <section>
@@ -366,57 +366,9 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         var ed = tinymce.get('contenu');
         document.getElementById('htmlOutput').textContent = ed ? ed.getContent() : '';
     }
-    function showPreview() {
-        // Récupérer le titre
-        var titreField = document.getElementById('titre');
-        var titre = '';
-        if (titreField) {
-            // TinyMCE sur titre ?
-            var titreEditor = tinymce.get('titre');
-            if (titreEditor) {
-                titre = titreEditor.getContent({format: 'text'}).trim();
-            } else {
-                titre = titreField.value || '';
-            }
-        }
-        // Récupérer la catégorie sélectionnée (texte)
-        var catSelect = document.getElementById('categorie');
-        var catNom = '';
-        if (catSelect) {
-            var idx = catSelect.selectedIndex;
-            if (idx >= 0) {
-                catNom = catSelect.options[idx].text;
-            }
-        }
-        // Récupérer l'auteur sélectionné (texte)
-        var auteurSelect = document.getElementById('auteur');
-        var auteurNom = '';
-        if (auteurSelect) {
-            var idxA = auteurSelect.selectedIndex;
-            if (idxA >= 0) {
-                auteurNom = auteurSelect.options[idxA].text;
-            }
-        }
-        // Récupérer le contenu HTML
+    function showHTML() {
         var ed = tinymce.get('contenu');
-        var html = ed ? ed.getContent() : '';
-        // Chercher la première image dans le contenu
-        var imgHtml = '';
-        var imgMatch = html.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
-        if (imgMatch) {
-            imgHtml = '<div style="text-align:center;margin:16px 0;\"><img src="' + imgMatch[1] + '" style="max-width:100%;height:auto;max-height:320px;box-shadow:0 2px 12px #0001;border-radius:6px;" /></div>';
-        }
-        // Construire l'aperçu avec une disposition claire
-        var previewHtml = '<article style="max-width:700px;margin:0 auto;padding:24px 0;">';
-        previewHtml += '<h1 style="text-align:center;margin-top:0;margin-bottom:10px;font-size:2.2em;">' + escapeHtml(titre || '(Sans titre)') + '</h1>';
-        previewHtml += '<div style="display:flex;justify-content:center;margin-bottom:8px;"><span style="background:#e0e7ff;color:#2d3a6b;font-size:0.95em;padding:3px 14px;border-radius:16px;">' + escapeHtml(catNom || '(Aucune catégorie)') + '</span></div>';
-        previewHtml += '<div style="text-align:center;color:#666;font-size:0.98em;font-style:italic;margin-bottom:18px;">Par ' + escapeHtml(auteurNom || '(Aucun auteur)') + '</div>';
-        if (imgHtml) previewHtml += imgHtml;
-        previewHtml += '<div style="margin-top:18px;">' + html + '</div>';
-        previewHtml += '</article>';
-        var preview = document.getElementById('preview-content');
-        preview.innerHTML = previewHtml;
-        document.getElementById('preview-modal').style.display = 'flex';
+        document.getElementById('htmlOutput').textContent = ed ? ed.getContent() : '';
     }
     // Fonction d'échappement simple pour le titre/catégorie
     function escapeHtml(text) {
