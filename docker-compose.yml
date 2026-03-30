@@ -1,0 +1,58 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:8.0
+    container_name: siteiran-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    command: --default-authentication-plugin=mysql_native_password
+
+  backoffice:
+    build: ./backoffice
+    container_name: siteiran-backoffice
+    depends_on:
+      - db
+    volumes:
+      - ./backoffice/public:/var/www/html
+      - ./backoffice/app:/var/www/app
+      - ./backoffice/vendor:/var/www/vendor
+      - ./backoffice/composer.json:/var/www/composer.json
+      - ./backoffice/fonctions:/var/www/fonctions
+    working_dir: /var/www/html
+    ports:
+      - "8081:80"
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=siteiran
+      - DB_USER=root
+      - DB_PASSWORD=root
+    command: bash -c "docker-php-ext-install pdo pdo_mysql && apache2-foreground"
+
+  frontoffice:
+    image: php:8.2-apache
+    container_name: siteiran-frontoffice
+    depends_on:
+      - db
+    volumes:
+      - ./frontoffice/public:/var/www/html
+      - ./frontoffice/app:/var/www/app
+      - ./frontoffice/vendor:/var/www/vendor
+      - ./frontoffice/composer.json:/var/www/composer.json
+    working_dir: /var/www/html
+    ports:
+      - "8082:80"
+    environment:
+      - DB_HOST=db
+      - DB_DATABASE=siteiran
+      - DB_USER=root
+      - DB_PASSWORD=root
+    command: bash -c "docker-php-ext-install pdo pdo_mysql && apache2-foreground"
+
+volumes:
+  db_data:

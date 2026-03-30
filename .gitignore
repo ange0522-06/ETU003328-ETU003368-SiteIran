@@ -1,0 +1,86 @@
+# Node
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+
+# Build
+/dist
+/build
+out/
+
+# IDEs
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Misc
+*.bak
+*.tmp
+*.swp
+
+# Coverage
+coverage/
+*.lcov
+
+# Test
+junit.xml
+coverage.xml
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.obj
+*.pyc
+*.pyo
+*.pyd
+
+# Package distribution
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Others
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# Backup files
+*~
+*.bak
+*.tmp
+*.orig
+*.old
+
+# Dependency directories
+deps/
