@@ -37,7 +37,7 @@ services:
                apache2-foreground"
 
   frontoffice:
-    image: php:8.2-apache
+    build: ./frontoffice
     container_name: siteiran-frontoffice
     depends_on:
       - db
@@ -51,7 +51,7 @@ services:
       - DB_DATABASE=siteiran
       - DB_USER=root
       - DB_PASSWORD=root
-    command: bash -c "docker-php-ext-install pdo pdo_mysql && apache2-foreground"
+    command: apache2-foreground
 
 volumes:
   db_data:
