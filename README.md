@@ -2,3 +2,4 @@
 
 # Permission de uploads
 # docker exec -it siteiran-backoffice chmod -R 777 /var/www/html/uploads
+# docker exec -it siteiran-mysql mysql -u root -p
