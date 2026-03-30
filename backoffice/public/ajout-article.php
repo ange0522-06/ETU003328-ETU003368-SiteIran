@@ -1,15 +1,40 @@
 <?php
 require_once __DIR__ . '/../app/db.php';
 
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titre = $_POST['titre'] ?? '';
     $contenu = $_POST['contenu'] ?? '';
     $auteur_id = $_POST['auteur_id'] ?? null;
     $categorie_id = $_POST['categorie_id'] ?? null;
-    $image_id = $_POST['image_id'] ?? null;
+    // Statut par défaut : Brouillon (id=2)
+    $statut_id = 2;
+    // Insertion initiale sans image_id
+    $stmt = $pdo->prepare('INSERT INTO article (titre, contenu, auteur_id, categorie_id, statut_id) VALUES (?, ?, ?, ?, ?)');
+    $stmt->execute([$titre, $contenu, $auteur_id, $categorie_id, $statut_id]);
+    $article_id = $pdo->lastInsertId();
 
-    $stmt = $pdo->prepare('INSERT INTO article (titre, contenu, auteur_id, categorie_id, image_id) VALUES (?, ?, ?, ?, ?)');
-    $stmt->execute([$titre, $contenu, $auteur_id, $categorie_id, $image_id]);
+    // Extraire la première image du contenu
+    $image_id = null;
+    if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $contenu, $m)) {
+        $img_src = $m[1];
+        // Chercher l'id correspondant dans la table image (champ photo)
+        $stmtImg = $pdo->prepare('SELECT id FROM image WHERE photo = ? LIMIT 1');
+        $stmtImg->execute([$img_src]);
+        $row = $stmtImg->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            // Si pas trouvé, chercher par nom de fichier (fin du chemin)
+            $filename = basename($img_src);
+            $stmtImg = $pdo->prepare('SELECT id FROM image WHERE photo LIKE ? ORDER BY id DESC LIMIT 1');
+            $stmtImg->execute(['%' . $filename]);
+            $row = $stmtImg->fetch(PDO::FETCH_ASSOC);
+        }
+        if ($row) {
+            $image_id = $row['id'];
+            // Mettre à jour l'article avec l'image_id
+            $pdo->prepare('UPDATE article SET image_id = ? WHERE id = ?')->execute([$image_id, $article_id]);
+        }
+    }
     echo '<p>Article ajouté avec succès !</p>';
 }
 
@@ -90,10 +115,22 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
     </style>
     <script>
     tinymce.init({
-        selector: '#titre, #contenu',
-        plugins: 'lists link image',
-        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link customimage',
-        height: 300,
+        selector: '#titre',
+        plugins: 'lists link',
+        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link',
+        height: 200,
+        license_key: 'gpl',
+        branding: false,
+        promotion: false,
+        statusbar: false,
+        automatic_uploads: false
+    });
+
+    tinymce.init({
+        selector: '#contenu',
+        plugins: 'lists link image preview',
+        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link customimage preview',
+        height: 200,
         license_key: 'gpl',
         branding: false,
         promotion: false,
@@ -271,12 +308,21 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         </div>
     </div>
 
+    <!-- Modal d'aperçu -->
+    <div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:10000;align-items:center;justify-content:center;">
+      <div style="background:#fff;max-width:900px;width:90vw;min-height:300px;max-height:90vh;overflow:auto;padding:32px 24px;border-radius:8px;box-shadow:0 8px 32px #0002;position:relative;">
+        <h2 style="margin-top:0">Aperçu</h2>
+        <div id="preview-content" style="min-height:200px;"></div>
+        <button onclick="closePreview()" style="position:absolute;right:16px;top:16px;">Fermer</button>
+      </div>
+    </div>
+
     <header><h1>Ajouter un article</h1></header>
     <main>
         <form method="post">
             <div>
                 <label for="titre"><strong>Titre :</strong></label><br>
-                <textarea id="titre" name="titre" aria-label="Titre de l'article"></textarea>
+                <textarea id="titre" name="titre" aria-label="Titre de l'article" style="min-height:50px;height:60px;font-size:1.2em;"></textarea>
             </div>
             <div>
                 <label for="contenu"><strong>Contenu :</strong></label><br>
@@ -300,7 +346,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="button" onclick="showHTML()">Voir le HTML</button>
+            <button type="button" onclick="showPreview()">Aperçu</button>
             <button type="submit">Enregistrer</button>
         </form>
         <section>
@@ -319,6 +365,66 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
     function showHTML() {
         var ed = tinymce.get('contenu');
         document.getElementById('htmlOutput').textContent = ed ? ed.getContent() : '';
+    }
+    function showPreview() {
+        // Récupérer le titre
+        var titreField = document.getElementById('titre');
+        var titre = '';
+        if (titreField) {
+            // TinyMCE sur titre ?
+            var titreEditor = tinymce.get('titre');
+            if (titreEditor) {
+                titre = titreEditor.getContent({format: 'text'}).trim();
+            } else {
+                titre = titreField.value || '';
+            }
+        }
+        // Récupérer la catégorie sélectionnée (texte)
+        var catSelect = document.getElementById('categorie');
+        var catNom = '';
+        if (catSelect) {
+            var idx = catSelect.selectedIndex;
+            if (idx >= 0) {
+                catNom = catSelect.options[idx].text;
+            }
+        }
+        // Récupérer l'auteur sélectionné (texte)
+        var auteurSelect = document.getElementById('auteur');
+        var auteurNom = '';
+        if (auteurSelect) {
+            var idxA = auteurSelect.selectedIndex;
+            if (idxA >= 0) {
+                auteurNom = auteurSelect.options[idxA].text;
+            }
+        }
+        // Récupérer le contenu HTML
+        var ed = tinymce.get('contenu');
+        var html = ed ? ed.getContent() : '';
+        // Chercher la première image dans le contenu
+        var imgHtml = '';
+        var imgMatch = html.match(/<img[^>]+src=["']([^"']+)["'][^>]*>/i);
+        if (imgMatch) {
+            imgHtml = '<div style="text-align:center;margin:16px 0;\"><img src="' + imgMatch[1] + '" style="max-width:100%;height:auto;max-height:320px;box-shadow:0 2px 12px #0001;border-radius:6px;" /></div>';
+        }
+        // Construire l'aperçu avec une disposition claire
+        var previewHtml = '<article style="max-width:700px;margin:0 auto;padding:24px 0;">';
+        previewHtml += '<h1 style="text-align:center;margin-top:0;margin-bottom:10px;font-size:2.2em;">' + escapeHtml(titre || '(Sans titre)') + '</h1>';
+        previewHtml += '<div style="display:flex;justify-content:center;margin-bottom:8px;"><span style="background:#e0e7ff;color:#2d3a6b;font-size:0.95em;padding:3px 14px;border-radius:16px;">' + escapeHtml(catNom || '(Aucune catégorie)') + '</span></div>';
+        previewHtml += '<div style="text-align:center;color:#666;font-size:0.98em;font-style:italic;margin-bottom:18px;">Par ' + escapeHtml(auteurNom || '(Aucun auteur)') + '</div>';
+        if (imgHtml) previewHtml += imgHtml;
+        previewHtml += '<div style="margin-top:18px;">' + html + '</div>';
+        previewHtml += '</article>';
+        var preview = document.getElementById('preview-content');
+        preview.innerHTML = previewHtml;
+        document.getElementById('preview-modal').style.display = 'flex';
+    }
+    // Fonction d'échappement simple pour le titre/catégorie
+    function escapeHtml(text) {
+        var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+    function closePreview() {
+        document.getElementById('preview-modal').style.display = 'none';
     }
     </script>
 </body>
