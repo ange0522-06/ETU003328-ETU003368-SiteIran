@@ -7,6 +7,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_PASSWORD: root
+      MYSQL_DATABASE: siteiran
     ports:
       - "3306:3306"
     volumes:
@@ -19,11 +20,8 @@ services:
     depends_on:
       - db
     volumes:
-      - ./backoffice/public:/var/www/html
-      - ./backoffice/app:/var/www/app
-      - ./backoffice/vendor:/var/www/vendor
-      - ./backoffice/composer.json:/var/www/composer.json
-      - ./backoffice/fonctions:/var/www/fonctions
+      # Monter tout le dossier backoffice, pas seulement public
+      - ./backoffice:/var/www/html
     working_dir: /var/www/html
     ports:
       - "8081:80"
@@ -32,7 +30,11 @@ services:
       - DB_DATABASE=siteiran
       - DB_USER=root
       - DB_PASSWORD=root
-    command: bash -c "docker-php-ext-install pdo pdo_mysql && apache2-foreground"
+    command: >
+      bash -c "docker-php-ext-install pdo pdo_mysql && 
+               mkdir -p /var/www/html/public/uploads && 
+               chmod -R 777 /var/www/html/public/uploads && 
+               apache2-foreground"
 
   frontoffice:
     image: php:8.2-apache
@@ -40,10 +42,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./frontoffice/public:/var/www/html
-      - ./frontoffice/app:/var/www/app
-      - ./frontoffice/vendor:/var/www/vendor
-      - ./frontoffice/composer.json:/var/www/composer.json
+      - ./frontoffice:/var/www/html
     working_dir: /var/www/html
     ports:
       - "8082:80"

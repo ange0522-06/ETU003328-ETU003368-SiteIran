@@ -6,22 +6,27 @@ function upload_image_tinymce($file, $alt = 'Image de l\'article') {
         return ['error' => 'Format non supporté'];
     }
 
-    $uploadDir = __DIR__ . '/../public/uploads/';
+    // Utiliser un chemin absolu depuis la racine du projet
+    $uploadDir = '/var/www/html/public/uploads/';
+    
+    // Vérifier et créer le dossier avec les bonnes permissions
     if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
+        mkdir($uploadDir, 0777, true);
     }
 
     $filename = uniqid('img_', true) . '.' . $ext;
     $target   = $uploadDir . $filename;
 
     if (move_uploaded_file($file['tmp_name'], $target)) {
-        // Chemin web pour TinyMCE (fonctionne partout)
-        $webPath = '/backoffice/public/uploads/' . $filename;
+        // Chemin web pour TinyMCE
+        $webPath = '/public/uploads/' . $filename;
         return [
             'location' => $webPath,
             'filename' => $filename
         ];
     } else {
-        return ['error' => 'Erreur upload : vérifiez les permissions du dossier uploads/'];
+        // Ajouter plus d'informations sur l'erreur
+        $error = error_get_last();
+        return ['error' => 'Erreur upload : ' . ($error['message'] ?? 'vérifiez les permissions du dossier uploads/')];
     }
 }

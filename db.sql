@@ -44,6 +44,11 @@ CREATE TABLE statut (
     nom VARCHAR(100) NOT NULL
 );
 
+insert into statut (nom) VALUES
+('Publié'),
+('Brouillon'),
+('Archivé');
+
 CREATE TABLE article (
     id INT AUTO_INCREMENT PRIMARY KEY,
     titre VARCHAR(255) NOT NULL,
