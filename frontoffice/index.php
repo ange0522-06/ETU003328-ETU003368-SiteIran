@@ -25,30 +25,63 @@ switch ($page) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title><?= htmlspecialchars($meta_title) ?></title>
     <meta name="description" content="<?= htmlspecialchars($meta_description) ?>">
     <meta property="og:title" content="<?= htmlspecialchars($meta_title) ?>">
     <meta property="og:description" content="<?= htmlspecialchars($meta_description) ?>">
     <meta property="og:type" content="website">
     <link rel="canonical" href="<?= htmlspecialchars($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']) ?>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <style>
+        :root {
+            --primary-dark: #1a1a1a;
+            --primary-light: #ffffff;
+            --accent-yellow: #ffc107;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --link-color: #0066cc;
+            --link-hover: #004999;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+            --bg-light: #fafafa;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
+            color: var(--text-dark);
+            background: var(--bg-light);
         }
+
+        a:focus, button:focus {
+            outline: 2px solid var(--accent-yellow);
+            outline-offset: 2px;
+        }
+
         header {
-            background: #1a1a1a;
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--primary-dark);
+            color: var(--primary-light);
+            padding: 1.2rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
+
         nav {
             max-width: 1200px;
             margin: 0 auto;
@@ -56,257 +89,424 @@ switch ($page) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 2rem;
         }
+
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
         nav h1 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+            color: var(--accent-yellow);
+            letter-spacing: 0.5px;
+            margin: 0;
         }
+
+        .tagline {
+            font-size: 0.8rem;
+            color: #ccc;
+            font-weight: 300;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
         nav ul {
             list-style: none;
             display: flex;
             gap: 2rem;
+            flex-wrap: wrap;
         }
+
         nav a {
-            color: white;
+            color: var(--primary-light);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
         }
+
         nav a:hover, nav a.active {
-            color: #ffc107;
+            color: var(--accent-yellow);
+            border-bottom-color: var(--accent-yellow);
         }
+
+        nav a:focus {
+            outline: none;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent-yellow);
+            color: var(--primary-dark);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 2rem;
         }
+
         h1 {
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
             margin-bottom: 2rem;
-            color: #1a1a1a;
+            color: var(--text-dark);
+            font-weight: 700;
         }
+
+        h2 {
+            font-size: 1.25rem;
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #2d2d2d 100%);
+            color: var(--primary-light);
+            padding: 3rem 2rem;
+            border-radius: 8px;
+            margin-bottom: 3rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
         .articles-grid {
             display: flex;
             flex-direction: column;
             gap: 2rem;
             margin-bottom: 2rem;
         }
+
         .article-card {
-            background: white;
+            background: var(--primary-light);
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: row;
             gap: 1.5rem;
             padding: 1.5rem;
         }
+
         .article-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-lg);
         }
+
         .article-card img {
             width: 200px;
             height: 150px;
             object-fit: cover;
             flex-shrink: 0;
-            border-radius: 4px;
+            border-radius: 6px;
+            loading: lazy;
         }
+
         .article-card-content {
             padding: 0;
             flex: 1;
             display: flex;
             flex-direction: column;
         }
+
         .article-card h2 {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             margin-bottom: 0.8rem;
-            font-weight: bold;
+            line-height: 1.4;
         }
+
         .article-card a {
-            color: #1a1a1a;
+            color: var(--text-dark);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color 0.2s ease;
         }
+
         .article-card a:hover {
-            color: #007bff;
+            color: var(--link-color);
         }
+
         .article-card-meta {
             font-size: 0.85rem;
-            color: #666;
-            margin-bottom: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
             line-height: 1.6;
         }
+
         .article-card-meta div {
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.4rem;
         }
+
         .article-card-excerpt {
             flex: 1;
-            margin-bottom: 0.8rem;
-            color: #555;
+            margin-bottom: 1rem;
+            color: var(--text-light);
             font-size: 0.95rem;
+            line-height: 1.6;
         }
+
         .read-more {
             display: inline-block;
-            color: #007bff;
+            color: var(--link-color);
             text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
+            font-weight: 600;
+            transition: all 0.2s ease;
             font-size: 0.95rem;
         }
+
         .read-more:hover {
-            color: #0056b3;
+            color: var(--link-hover);
+            text-decoration: underline;
         }
-        .article-card-footer {
-            display: none;
-        }
-        .read-more {
-            display: inline-block;
-            color: #007bff;
-            text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
-        }
-        .read-more:hover {
-            color: #0056b3;
-        }
+
         .category-tag {
             display: inline-block;
-            background: #ffc107;
-            color: #1a1a1a;
-            padding: 0.25rem 0.75rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
+            background: var(--accent-yellow);
+            color: var(--primary-dark);
+            padding: 0.35rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
             text-decoration: none;
+            transition: transform 0.2s ease;
+            margin-right: 0.5rem;
         }
+
+        .category-tag:hover {
+            transform: scale(1.05);
+        }
+
         .pagination {
             display: flex;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
         }
+
         .pagination a, .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.6rem 0.85rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
             text-decoration: none;
-            color: #007bff;
+            color: var(--link-color);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: var(--primary-light);
         }
+
         .pagination a:hover {
-            background: #007bff;
-            color: white;
+            background: var(--link-color);
+            color: var(--primary-light);
+            border-color: var(--link-color);
+            transform: translateY(-2px);
         }
+
         .pagination span.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
+            background: var(--link-color);
+            color: var(--primary-light);
+            border-color: var(--link-color);
         }
+
         .no-articles {
             text-align: center;
-            padding: 2rem;
-            color: #666;
+            padding: 3rem 2rem;
+            background: var(--primary-light);
+            border-radius: 8px;
+            color: var(--text-light);
+            box-shadow: var(--shadow);
         }
+
         .category-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 2rem;
             margin-bottom: 2rem;
         }
+
         .category-card {
-            background: white;
+            background: var(--primary-light);
             padding: 2rem;
             border-radius: 8px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none;
             color: inherit;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 200px;
         }
+
         .category-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-lg);
         }
+
         .category-card h2 {
-            color: #1a1a1a;
+            color: var(--text-dark);
             margin-bottom: 0.5rem;
         }
+
         .category-card p {
-            color: #666;
+            color: var(--text-light);
         }
+
         footer {
-            background: #1a1a1a;
-            color: white;
+            background: var(--primary-dark);
+            color: var(--primary-light);
             text-align: center;
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             margin-top: 4rem;
+            font-size: 0.9rem;
         }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent-yellow);
+        }
+
         @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem 2rem;
+            }
+
             nav ul {
                 gap: 1rem;
+                width: 100%;
+                justify-content: space-around;
             }
+
             .article-card {
                 flex-direction: column;
             }
+
             .article-card img {
                 width: 100%;
+                height: 200px;
+            }
+
+            .container {
+                padding: 0 1.5rem;
+            }
+
+            .hero {
+                padding: 2rem 1.5rem;
+            }
+
+            .category-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <h1>📰 Site Iran</h1>
+    <a href="#main" class="skip-link">Aller au contenu principal</a>
+    
+    <header role="banner">
+        <nav role="navigation" aria-label="Navigation principale">
+            <div class="logo-section">
+                <h1>📰 SITE IRAN</h1>
+                <p class="tagline">Actualités • Analyses • Reportages</p>
+            </div>
             <ul>
-                <li><a href="/" class="<?= $page === 'accueil' ? 'active' : '' ?>">Accueil</a></li>
-                <li><a href="/articles" class="<?= $page === 'articles' ? 'active' : '' ?>">Articles</a></li>
-                <li><a href="/categories" class="<?= $page === 'categories' ? 'active' : '' ?>">Catégories</a></li>
-                <li><a href="/recherche">Recherche</a></li>
+                <li><a href="/" class="<?= $page === 'accueil' ? 'active' : '' ?>" aria-label="Accueil">Accueil</a></li>
+                <li><a href="/articles" class="<?= $page === 'articles' ? 'active' : '' ?>" aria-label="Tous les articles">Articles</a></li>
+                <li><a href="/categories" class="<?= $page === 'categories' ? 'active' : '' ?>" aria-label="Parcourir par catégories">Catégories</a></li>
+                <li><a href="/recherche" aria-label="Rechercher des articles">Recherche</a></li>
             </ul>
         </nav>
     </header>
 
-    <main class="container">
+    <main id="main" class="container" role="main">
         <?php if ($page === 'accueil'): ?>
-            <h1>Bienvenue sur Site Iran</h1>
-            <p style="font-size: 1.1rem; margin-bottom: 2rem;">
-                Découvrez les dernières actualités, analyses et reportages sur l'Iran. Notre équipe vous propose 
-                des contenus en profondeur pour mieux comprendre les enjeux du pays.
-            </p>
+            <section class="hero">
+                <h1>Bienvenue sur Site Iran</h1>
+                <p>
+                    Découvrez les dernières actualités, analyses et reportages sur l'Iran. Notre équipe vous propose 
+                    des contenus en profondeur pour mieux comprendre les enjeux du pays.
+                </p>
+            </section>
             
-            <h2 style="font-size: 1.5rem; margin: 3rem 0 1.5rem 0;">Articles récents</h2>
+            <section>
+                <h2 style="font-size: 1.5rem; margin: 2rem 0 1.5rem 0;">📰 Articles récents</h2>
 
         <?php elseif ($page === 'articles' || $categorie_id): ?>
-            <?php if ($categorie_id): ?>
-                <?php
-                $cat_query = $pdo->query("SELECT nom FROM categorie WHERE id = $categorie_id");
-                $categorie = $cat_query->fetch();
-                if ($categorie) {
-                    echo '<h1>' . htmlspecialchars($categorie['nom']) . '</h1>';
-                }
-                ?>
-            <?php else: ?>
-                <h1>Tous les articles</h1>
-            <?php endif; ?>
+            <section>
+                <?php if ($categorie_id): ?>
+                    <?php
+                    $cat_query = $pdo->query("SELECT nom FROM categorie WHERE id = $categorie_id");
+                    $categorie = $cat_query->fetch();
+                    if ($categorie) {
+                        echo '<h1>' . htmlspecialchars($categorie['nom']) . '</h1>';
+                    }
+                    ?>
+                <?php else: ?>
+                    <h1>Tous les articles</h1>
+                <?php endif; ?>
 
         <?php elseif ($page === 'categories'): ?>
-            <h1>Catégories</h1>
-            <?php
-            $cat_query = $pdo->query("SELECT * FROM categorie");
-            $categories = $cat_query->fetchAll();
-            ?>
-            <div class="category-grid">
-                <?php foreach ($categories as $cat): ?>
-                    <?php
-                    $count_query = $pdo->query("SELECT COUNT(*) as total FROM article WHERE categorie_id = {$cat['id']} AND statut_id = 1");
-                    $count = $count_query->fetch()['total'];
-                    ?>
-                    <a href="/categorie/<?= strtolower(str_replace(' ', '-', $cat['nom'])) ?>-<?= $cat['id'] ?>" class="category-card">
-                        <h2><?= htmlspecialchars($cat['nom']) ?></h2>
-                        <p><?= $count ?> article<?= $count > 1 ? 's' : '' ?></p>
-                    </a>
-                <?php endforeach; ?>
-            </div>
+            <section>
+                <h1>Explorez nos catégories</h1>
+                <?php
+                $cat_query = $pdo->query("SELECT * FROM categorie");
+                $categories = $cat_query->fetchAll();
+                ?>
+                <div class="category-grid">
+                    <?php foreach ($categories as $cat): ?>
+                        <?php
+                        $count_query = $pdo->query("SELECT COUNT(*) as total FROM article WHERE categorie_id = {$cat['id']} AND statut_id = 1");
+                        $count = $count_query->fetch()['total'];
+                        ?>
+                        <a href="/categorie/<?= strtolower(str_replace(' ', '-', $cat['nom'])) ?>-<?= $cat['id'] ?>" class="category-card" role="button" aria-label="<?= htmlspecialchars($cat['nom']) ?> - <?= $count ?> article<?= $count > 1 ? 's' : '' ?>">
+                            <h2><?= htmlspecialchars($cat['nom']) ?></h2>
+                            <p><?= $count ?> article<?= $count > 1 ? 's' : '' ?></p>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
+            </section>
             <?php exit; ?>
         <?php endif; ?>
 
@@ -339,8 +539,8 @@ switch ($page) {
         $articles = $articles_query->fetchAll();
 
         if (empty($articles)): ?>
-            <div class="no-articles">
-                <p>Aucun article trouvé.</p>
+            <div class="no-articles" role="status" aria-live="polite">
+                <p>Aucun article trouvé. Veuillez vérifier vos critères de recherche.</p>
             </div>
         <?php else: ?>
             <div class="articles-grid">
@@ -348,26 +548,33 @@ switch ($page) {
                     $slug = strtolower(str_replace(' ', '-', preg_replace('/[^a-zA-Z0-9 ]/', '', $article['titre'])));
                     $article_url = "/articles/article-{$slug}-{$article['id']}.html";
                     $excerpt = substr(strip_tags($article['contenu']), 0, 150) . '...';
+                    $article_date = date('d F Y \\à H\\hi', strtotime($article['date_publication']));
                 ?>
                     <article class="article-card">
                         <?php if ($article['photo']): ?>
                             <img 
                                 src="<?= htmlspecialchars($article['photo']) ?>" 
                                 alt="<?= htmlspecialchars($article['image_alt'] ?? $article['titre']) ?>"
+                                loading="lazy"
+                                decoding="async"
                             >
+                        <?php else: ?>
+                            <div style="width: 200px; height: 150px; background: #e0e0e0; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #999;">Sans image</div>
                         <?php endif; ?>
                         <div class="article-card-content">
                             <h2>
-                                <a href="<?= $article_url ?>">
+                                <a href="<?= $article_url ?>" aria-label="<?= htmlspecialchars($article['titre']) ?>">
                                     <?= htmlspecialchars(strip_tags($article['titre'])) ?>
                                 </a>
                             </h2>
                             <p class="article-card-excerpt"><?= htmlspecialchars($excerpt) ?></p>
-                            <a href="<?= $article_url ?>" class="read-more">Lire →</a>
+                            <a href="<?= $article_url ?>" class="read-more" aria-label="Lire l'article: <?= htmlspecialchars(strip_tags($article['titre'])) ?>">Lire l'article →</a>
                             <div class="article-card-meta" style="margin-top: auto; margin-bottom: 0;">
-                                <div style="margin-top: 1rem;">Publié <?= date('\\l\\e d F Y \\à H\\hi', strtotime($article['date_publication'])) ?><?php if ($article['auteur']): ?>, par <?= htmlspecialchars($article['auteur']) ?><?php endif; ?></div>
+                                <div style="margin-top: 1rem;">
+                                    <time datetime="<?= date('Y-m-d', strtotime($article['date_publication'])) ?>">Publié le <?= $article_date ?></time><?php if ($article['auteur']): ?> <span aria-label="par">, par</span> <strong><?= htmlspecialchars($article['auteur']) ?></strong><?php endif; ?>
+                                </div>
                                 <?php if ($article['categorie']): ?>
-                                    <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" style="color: #007bff; text-decoration: none;"><?= htmlspecialchars($article['categorie']) ?></a></div>
+                                    <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" class="category-tag"><?= htmlspecialchars($article['categorie']) ?></a></div>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -377,29 +584,44 @@ switch ($page) {
 
             <!-- Pagination -->
             <?php if ($total_pages > 1): ?>
-                <div class="pagination">
+                <nav aria-label="Pagination" class="pagination">
                     <?php if ($current_page > 1): ?>
-                        <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $current_page - 1 ?>">← Précédent</a>
+                        <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $current_page - 1 ?>" aria-label="Page précédente">← Précédent</a>
                     <?php endif; ?>
 
                     <?php for ($i = 1; $i <= $total_pages; $i++): ?>
                         <?php if ($i === $current_page): ?>
-                            <span class="active"><?= $i ?></span>
+                            <span class="active" aria-current="page"><?= $i ?></span>
                         <?php else: ?>
-                            <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $i ?>"><?= $i ?></a>
+                            <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $i ?>" aria-label="Page <?= $i ?>">Page <?= $i ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
 
                     <?php if ($current_page < $total_pages): ?>
-                        <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $current_page + 1 ?>">Suivant →</a>
+                        <a href="?page=<?= $page ?><?= $categorie_id ? '&categorie=' . $categorie_id : '' ?>&p=<?= $current_page + 1 ?>" aria-label="Page suivante">Suivant →</a>
                     <?php endif; ?>
-                </div>
+                </nav>
             <?php endif; ?>
         <?php endif; ?>
+            </section>
     </main>
 
-    <footer>
-        <p>&copy; <?= date('Y') ?> Site Iran. Tous droits réservés.</p>
+    <footer role="contentinfo">
+        <p>&copy; <?= date('Y') ?> <strong>Site Iran</strong>. Tous droits réservés.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+            <a href="/mentions-legales" aria-label="Mentions légales">Mentions légales</a> | 
+            <a href="/confidentialite" aria-label="Politique de confidentialité">Politique de confidentialité</a>
+        </p>
     </footer>
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Site Iran",
+        "description": "<?= htmlspecialchars($meta_description) ?>",
+        "url": "<?= $_SERVER['REQUEST_SCHEME'] ?>://<?= $_SERVER['HTTP_HOST'] ?>"
+    }
+    </script>
 </body>
 </html>

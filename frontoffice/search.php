@@ -19,30 +19,63 @@ $meta_description = $search_term ? htmlspecialchars("Résultats de recherche pou
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title><?= $meta_title ?></title>
     <meta name="description" content="<?= $meta_description ?>">
     <meta property="og:title" content="<?= $meta_title ?>">
     <meta property="og:description" content="<?= $meta_description ?>">
     <meta property="og:type" content="website">
     <link rel="canonical" href="<?= htmlspecialchars($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/recherche') ?>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
     <style>
+        :root {
+            --primary-dark: #1a1a1a;
+            --primary-light: #ffffff;
+            --accent-yellow: #ffc107;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --link-color: #0066cc;
+            --link-hover: #004999;
+            --border-color: #e0e0e0;
+            --shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+            --bg-light: #fafafa;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
+            color: var(--text-dark);
+            background: var(--bg-light);
         }
+
+        a:focus, button:focus {
+            outline: 2px solid var(--accent-yellow);
+            outline-offset: 2px;
+        }
+
         header {
-            background: #1a1a1a;
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: var(--primary-dark);
+            color: var(--primary-light);
+            padding: 1.2rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
+
         nav {
             max-width: 1200px;
             margin: 0 auto;
@@ -50,212 +83,355 @@ $meta_description = $search_term ? htmlspecialchars("Résultats de recherche pou
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 2rem;
         }
+
+        .logo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+        }
+
         nav h1 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            font-weight: 800;
+            white-space: nowrap;
+            color: var(--accent-yellow);
+            letter-spacing: 0.5px;
+            margin: 0;
         }
+
+        .tagline {
+            font-size: 0.8rem;
+            color: #ccc;
+            font-weight: 300;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
         nav ul {
             list-style: none;
             display: flex;
             gap: 2rem;
+            flex-wrap: wrap;
         }
+
         nav a {
-            color: white;
+            color: var(--primary-light);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            padding-bottom: 4px;
+            border-bottom: 2px solid transparent;
         }
+
         nav a:hover, nav a.active {
-            color: #ffc107;
+            color: var(--accent-yellow);
+            border-bottom-color: var(--accent-yellow);
         }
+
+        nav a:focus {
+            outline: none;
+        }
+
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--accent-yellow);
+            color: var(--primary-dark);
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 2rem;
         }
+
         .search-section {
-            background: white;
+            background: var(--primary-light);
             padding: 3rem 2rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-lg);
             margin-bottom: 2rem;
         }
+
         .search-title {
-            font-size: 1.8rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             margin-bottom: 1.5rem;
-            color: #1a1a1a;
+            color: var(--text-dark);
+            font-weight: 700;
         }
+
         .search-box {
             display: flex;
             gap: 1rem;
         }
+
         .search-box input {
             flex: 1;
-            padding: 0.75rem 1rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.85rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
             font-size: 1rem;
+            transition: border-color 0.2s ease;
         }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--link-color);
+        }
+
         .search-box button {
-            padding: 0.75rem 2rem;
-            background: #007bff;
+            padding: 0.85rem 2rem;
+            background: var(--link-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-weight: bold;
-            transition: background 0.3s;
+            font-weight: 600;
+            transition: all 0.2s ease;
         }
+
         .search-box button:hover {
-            background: #0056b3;
+            background: var(--link-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
         }
+
         .results-info {
             margin-bottom: 2rem;
-            color: #666;
-            font-size: 1.1rem;
+            color: var(--text-light);
+            font-size: 1rem;
+            padding: 1rem;
+            background: var(--primary-light);
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-yellow);
         }
+
         .articles-grid {
             display: flex;
             flex-direction: column;
             gap: 2rem;
             margin-bottom: 2rem;
         }
+
         .article-card {
-            background: white;
+            background: var(--primary-light);
             border-radius: 8px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             display: flex;
             flex-direction: row;
             gap: 1.5rem;
             padding: 1.5rem;
         }
+
         .article-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-lg);
         }
+
         .article-card img {
             width: 200px;
             height: 150px;
             object-fit: cover;
             flex-shrink: 0;
-            border-radius: 4px;
+            border-radius: 6px;
+            loading: lazy;
         }
+
         .article-card-content {
             padding: 0;
             flex: 1;
             display: flex;
             flex-direction: column;
         }
+
         .article-card h2 {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             margin-bottom: 0.8rem;
-            font-weight: bold;
+            font-weight: 600;
+            line-height: 1.4;
         }
+
         .article-card a {
-            color: #1a1a1a;
+            color: var(--text-dark);
             text-decoration: none;
-            transition: color 0.3s;
+            transition: color 0.2s ease;
         }
+
         .article-card a:hover {
-            color: #007bff;
+            color: var(--link-color);
         }
+
         .article-card-excerpt {
             flex: 1;
-            margin-bottom: 0.8rem;
-            color: #555;
+            margin-bottom: 1rem;
+            color: var(--text-light);
             font-size: 0.95rem;
+            line-height: 1.6;
         }
+
         .article-card-meta {
             font-size: 0.85rem;
-            color: #666;
+            color: var(--text-light);
             display: flex;
             flex-direction: column;
             gap: 0.3rem;
             margin-top: auto;
         }
+
         .read-more {
             display: inline-block;
-            color: #007bff;
+            color: var(--link-color);
             text-decoration: none;
-            font-weight: bold;
-            transition: color 0.3s;
+            font-weight: 600;
+            transition: all 0.2s ease;
             font-size: 0.95rem;
             margin-top: 0.8rem;
         }
+
         .read-more:hover {
-            color: #0056b3;
+            color: var(--link-hover);
+            text-decoration: underline;
         }
+
         .no-results {
             text-align: center;
             padding: 3rem 2rem;
-            background: white;
+            background: var(--primary-light);
             border-radius: 8px;
-            color: #666;
+            color: var(--text-light);
+            box-shadow: var(--shadow);
         }
+
         .pagination {
             display: flex;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 2rem;
+            margin-top: 3rem;
+            flex-wrap: wrap;
         }
+
         .pagination a, .pagination span {
-            padding: 0.5rem 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 0.6rem 0.85rem;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
             text-decoration: none;
-            color: #007bff;
+            color: var(--link-color);
+            font-weight: 500;
+            transition: all 0.2s ease;
+            background: var(--primary-light);
         }
+
         .pagination a:hover {
-            background: #007bff;
-            color: white;
+            background: var(--link-color);
+            color: var(--primary-light);
+            border-color: var(--link-color);
+            transform: translateY(-2px);
         }
+
         .pagination span.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
+            background: var(--link-color);
+            color: var(--primary-light);
+            border-color: var(--link-color);
         }
+
         footer {
-            background: #1a1a1a;
-            color: white;
+            background: var(--primary-dark);
+            color: var(--primary-light);
             text-align: center;
-            padding: 2rem;
+            padding: 2.5rem 2rem;
             margin-top: 4rem;
+            font-size: 0.9rem;
         }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        footer a:hover {
+            color: var(--accent-yellow);
+        }
+
         .highlight {
-            background: #ffeb3b;
-            padding: 0 2px;
+            background: var(--accent-yellow);
+            padding: 0 3px;
+            font-weight: 600;
         }
+
         @media (max-width: 768px) {
+            nav {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem 2rem;
+            }
+
             nav ul {
                 gap: 1rem;
+                width: 100%;
+                justify-content: space-around;
             }
+
             .article-card {
                 flex-direction: column;
             }
+
             .article-card img {
                 width: 100%;
+                height: 200px;
             }
+
             .search-box {
                 flex-direction: column;
+            }
+
+            .container {
+                padding: 0 1.5rem;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
             }
         }
     </style>
 </head>
 <body>
-    <header>
-        <nav>
-            <h1>📰 Site Iran</h1>
+    <a href="#main" class="skip-link">Aller au contenu principal</a>
+    
+    <header role="banner">
+        <nav role="navigation" aria-label="Navigation principale">
+            <div class="logo-section">
+                <h1>📰 SITE IRAN</h1>
+                <p class="tagline">Actualités • Analyses • Reportages</p>
+            </div>
             <ul>
-                <li><a href="/">Accueil</a></li>
-                <li><a href="/articles">Articles</a></li>
-                <li><a href="/categories">Catégories</a></li>
-                <li><a href="/recherche" class="active">Recherche</a></li>
+                <li><a href="/" aria-label="Accueil">Accueil</a></li>
+                <li><a href="/articles" aria-label="Tous les articles">Articles</a></li>
+                <li><a href="/categories" aria-label="Parcourir par catégories">Catégories</a></li>
+                <li><a href="/recherche" class="active" aria-label="Rechercher des articles">Recherche</a></li>
             </ul>
         </nav>
     </header>
 
-    <main class="container">
+    <main id="main" class="container" role="main">
         <div class="search-section">
             <h1 class="search-title">Rechercher un article</h1>
             <form method="GET" action="/recherche" class="search-box">
@@ -371,8 +547,12 @@ $meta_description = $search_term ? htmlspecialchars("Résultats de recherche pou
         ?>
     </main>
 
-    <footer>
-        <p>&copy; <?= date('Y') ?> Site Iran. Tous droits réservés.</p>
+    <footer role="contentinfo">
+        <p>&copy; <?= date('Y') ?> <strong>Site Iran</strong>. Tous droits réservés.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+            <a href="/mentions-legales" aria-label="Mentions légales">Mentions légales</a> | 
+            <a href="/confidentialite" aria-label="Politique de confidentialité">Politique de confidentialité</a>
+        </p>
     </footer>
 </body>
 </html>
