@@ -1,29 +1,26 @@
 <?php
 require_once __DIR__ . '/../app/db.php';
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $titre = $_POST['titre'] ?? '';
     $contenu = $_POST['contenu'] ?? '';
     $auteur_id = $_POST['auteur_id'] ?? null;
     $categorie_id = $_POST['categorie_id'] ?? null;
-    // Statut par défaut : Brouillon (id=2)
-    $statut_id = 2;
-    // Insertion initiale sans image_id
+    $statut_id = 2; // Brouillon par défaut
+
     $stmt = $pdo->prepare('INSERT INTO article (titre, contenu, auteur_id, categorie_id, statut_id) VALUES (?, ?, ?, ?, ?)');
     $stmt->execute([$titre, $contenu, $auteur_id, $categorie_id, $statut_id]);
     $article_id = $pdo->lastInsertId();
 
-    // Extraire la première image du contenu
+    // Extraction de la première image pour image_id
     $image_id = null;
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $contenu, $m)) {
         $img_src = $m[1];
-        // Chercher l'id correspondant dans la table image (champ photo)
         $stmtImg = $pdo->prepare('SELECT id FROM image WHERE photo = ? LIMIT 1');
         $stmtImg->execute([$img_src]);
         $row = $stmtImg->fetch(PDO::FETCH_ASSOC);
+
         if (!$row) {
-            // Si pas trouvé, chercher par nom de fichier (fin du chemin)
             $filename = basename($img_src);
             $stmtImg = $pdo->prepare('SELECT id FROM image WHERE photo LIKE ? ORDER BY id DESC LIMIT 1');
             $stmtImg->execute(['%' . $filename]);
@@ -31,16 +28,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if ($row) {
             $image_id = $row['id'];
-            // Mettre à jour l'article avec l'image_id
             $pdo->prepare('UPDATE article SET image_id = ? WHERE id = ?')->execute([$image_id, $article_id]);
         }
     }
-    echo '<p>Article ajouté avec succès !</p>';
+    echo '<p style="color:green;">Article ajouté avec succès !</p>';
 }
 
 $auteurs = $pdo->query('SELECT id, nom FROM auteur')->fetchAll(PDO::FETCH_ASSOC);
 $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -48,6 +45,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
     <title>Ajouter un article | Backoffice</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
+    <link rel="stylesheet" href="../assets/style.css">
     <script src="tinymce/js/tinymce/tinymce.min.js"></script>
     <style>
         /* Modal de redimensionnement */
@@ -69,68 +67,13 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
             width: 95%;
             box-shadow: 0 8px 32px rgba(0,0,0,0.25);
         }
-        #resize-modal h3 { margin: 0 0 16px; font-size: 1.1rem; }
-        #preview-canvas {
-            display: block;
-            max-width: 100%;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            margin-bottom: 16px;
-        }
-        .resize-controls {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-bottom: 16px;
-        }
-        .resize-controls label { font-size: 0.9rem; }
-        .resize-controls input[type=number] {
-            width: 80px;
-            padding: 4px 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        .resize-controls input[type=range] { flex: 1; min-width: 120px; }
-        .alt-field { margin-bottom: 16px; }
-        .alt-field label { display: block; font-size: 0.9rem; margin-bottom: 4px; }
-        .alt-field input {
-            width: 100%;
-            padding: 6px 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .modal-actions button {
-            padding: 8px 18px;
-            border-radius: 4px;
-            border: none;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-        #btn-confirm-upload { background: #0066cc; color: #fff; }
-        #btn-cancel-upload  { background: #eee; color: #333; }
-        #upload-info { font-size: 0.8rem; color: #666; margin-top: 6px; }
     </style>
     <script>
-    tinymce.init({
-        selector: '#titre',
-        plugins: 'lists link',
-        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link',
-        height: 200,
-        license_key: 'gpl',
-        branding: false,
-        promotion: false,
-        statusbar: false,
-        automatic_uploads: false
-    });
-
     tinymce.init({
         selector: '#contenu',
         plugins: 'lists link image preview',
         toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | bullist numlist | link customimage preview',
-        height: 200,
+        height: 400,
         license_key: 'gpl',
         branding: false,
         promotion: false,
@@ -152,13 +95,37 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
                     input.click();
                 }
             });
+            // Ajout : customisation du preview pour inclure catégorie et auteur
+            editor.on('ExecCommand', function(e) {
+                if (e.command === 'mcePreview') {
+                    setTimeout(function() {
+                        var previewWin = document.querySelector('.tox-dialog__body-content iframe');
+                        if (previewWin && previewWin.contentDocument) {
+                            var doc = previewWin.contentDocument;
+                            // Récupérer valeurs catégorie et auteur
+                            var cat = '';
+                            var auteur = '';
+                            var catSel = document.getElementById('categorie_id');
+                            if (catSel) cat = catSel.options[catSel.selectedIndex].text;
+                            var auteurSel = document.getElementById('auteur_id');
+                            if (auteurSel) auteur = auteurSel.options[auteurSel.selectedIndex].text;
+                            // Créer bloc info
+                            var infoDiv = doc.createElement('div');
+                            infoDiv.style = 'margin:24px 0 12px 0;padding:12px 18px;background:#f8f8f8;border-radius:6px;border:1px solid #eee;font-size:1.1em;color:#333;';
+                            infoDiv.innerHTML =
+                                '<b>Catégorie :</b> ' + (cat || '-') + '<br>' +
+                                '<b>Auteur :</b> ' + (auteur || '-');
+                            // Insérer en haut du body du preview
+                            doc.body.insertBefore(infoDiv, doc.body.firstChild);
+                        }
+                    }, 300);
+                }
+            });
         }
     });
 
-    // ──────────────────────────────────────────────
-    // Modal de redimensionnement
-    // ──────────────────────────────────────────────
-    var _originalImage = null; // HTMLImageElement
+    // Modal redimensionnement (code inchangé)
+    var _originalImage = null;
     var _originalFile  = null;
     var _currentEditor = null;
 
@@ -171,7 +138,6 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
             var img = new Image();
             img.onload = function() {
                 _originalImage = img;
-                // Initialise les champs
                 document.getElementById('inp-width').value  = img.naturalWidth;
                 document.getElementById('inp-height').value = img.naturalHeight;
                 document.getElementById('inp-quality').value = 85;
@@ -187,7 +153,6 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
 
     function drawPreview(w, h) {
         var canvas = document.getElementById('preview-canvas');
-        // Affiche en 100% mais limite visuellement via CSS max-width
         canvas.width  = w;
         canvas.height = h;
         var ctx = canvas.getContext('2d');
@@ -196,7 +161,6 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
 
     function updateInfo() {
         var canvas = document.getElementById('preview-canvas');
-        // Taille estimée en ko (JPEG q=quality)
         var q = parseInt(document.getElementById('inp-quality').value) / 100;
         canvas.toBlob(function(blob) {
             var ko = blob ? Math.round(blob.size / 1024) : '?';
@@ -205,7 +169,6 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         }, 'image/jpeg', q);
     }
 
-    // Garder le ratio
     var _lockRatio = true;
     document.addEventListener('DOMContentLoaded', function() {
         var inpW = document.getElementById('inp-width');
@@ -281,6 +244,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
     </script>
 </head>
 <body>
+
     <!-- Modal de redimensionnement -->
     <div id="resize-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-box">
@@ -308,75 +272,128 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         </div>
     </div>
 
-    <!-- Modal d'aperçu -->
-    <div id="preview-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.15);z-index:10000;align-items:center;justify-content:center;">
-      <div style="background:#fff;max-width:900px;width:90vw;min-height:300px;max-height:90vh;overflow:auto;padding:32px 24px;border-radius:8px;box-shadow:0 8px 32px #0002;position:relative;">
-        <h2 style="margin-top:0">Aperçu</h2>
-        <div id="preview-content" style="min-height:200px;"></div>
-        <button onclick="closePreview()" style="position:absolute;right:16px;top:16px;">Fermer</button>
-      </div>
+    <div class="bo-layout">
+        <!-- SIDEBAR -->
+        <aside class="bo-sidebar">
+            <div class="bo-sidebar-logo">
+                <div class="bo-sidebar-logo-name">Guerre <span>Iran</span></div>
+                <div class="bo-sidebar-logo-sub">Backoffice</div>
+            </div>
+            <div class="bo-nav-section">Contenu</div>
+            <a href="accueil.php" class="bo-nav-item">Accueil</a>
+            <a href="ajout-article.php" class="bo-nav-item active">Ajouter un article</a>
+            <a href="liste-articles.php" class="bo-nav-item">Liste des articles</a>
+            <div class="bo-nav-section">Système</div>
+            <a href="index.php" class="bo-nav-item">Login</a>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="bo-main">
+            <div class="bo-topbar">
+                <div class="bo-page-title">Ajouter un article</div>
+                
+                <!-- Boutons en haut à droite (comme demandé) -->
+                <div class="bo-topbar-actions" style="display:flex; gap:10px; align-items:center;">
+                    <a href="ajout-article.php" class="btn btn-primary">+ Nouveau article</a>
+                    <button type="submit" form="article-form" class="btn btn-success" style="min-width:160px;">
+                        Enregistrer
+                    </button>
+                </div>
+            </div>
+
+            <div class="bo-content">
+                <form id="article-form" method="post">
+                    <!-- TinyMCE Toolbar déplacé en haut -->
+                    <div class="bo-card" style="margin-bottom:20px;">
+                        <div class="bo-card-header">
+                            Outils de mise en forme (Titre & Contenu)
+                        </div>
+                        <div class="bo-card-body" style="padding:12px 18px;">
+                            <textarea id="contenu" name="contenu" style="visibility:hidden; height:0;"></textarea>
+                            <!-- TinyMCE va remplacer cette zone et afficher sa barre d'outils ici -->
+                        </div>
+                    </div>
+
+                    <div class="bo-form-grid">
+                        <!-- Colonne gauche -->
+                        <div>
+                           
+                            <div class="bo-card" style="margin-top:16px">
+                                <div class="bo-card-header">Code HTML généré</div>
+                                <div class="bo-card-body">
+                                    <button type="button" onclick="showHTML()" class="btn btn-ghost" style="margin-bottom:8px">Afficher</button>
+                                    <pre id="htmlOutput" style="background:#f0f0f0;padding:10px;white-space:pre-wrap;"></pre>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colonne droite : options -->
+                        <div>
+                            <div class="bo-card">
+                                <div class="bo-card-header">Statut & Date</div>
+                                <div class="bo-card-body">
+                                    <p disabled><option selected>Brouillon</p>
+                                    <div style="margin-top:10px">
+                                        <label class="bo-label">Date de publication</label>
+                                        <input type="text" class="bo-input" value="<?php echo date('d/m/Y H:i'); ?>" disabled>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bo-card" style="margin-top:14px">
+                                <div class="bo-card-header">Catégorie</div>
+                                <div class="bo-card-body">
+                                    <label class="bo-label" for="categorie_id">Catégorie *</label>
+                                    <select id="categorie_id" name="categorie_id" class="bo-input" required>
+                                        <option value="">-- Choisir --</option>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nom']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="bo-card" style="margin-top:14px">
+                                <div class="bo-card-header">Auteur</div>
+                                <div class="bo-card-body">
+                                    <label class="bo-label" for="auteur_id">Auteur</label>
+                                    <select id="auteur_id" name="auteur_id" class="bo-input">
+                                        <option value="">-- Aucun --</option>
+                                        <?php foreach ($auteurs as $auteur): ?>
+                                            <option value="<?= $auteur['id'] ?>"><?= htmlspecialchars($auteur['nom']) ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <header><h1>Ajouter un article</h1></header>
-    <main>
-        <form method="post">
-            <div>
-                <label for="titre"><strong>Titre :</strong></label><br>
-                <textarea id="titre" name="titre" aria-label="Titre de l'article" style="min-height:50px;height:60px;font-size:1.2em;"></textarea>
-            </div>
-            <div>
-                <label for="contenu"><strong>Contenu :</strong></label><br>
-                <textarea id="contenu" name="contenu" aria-label="Contenu de l'article"></textarea>
-            </div>
-            <div>
-                <label for="auteur"><strong>Auteur :</strong></label>
-                <select id="auteur" name="auteur_id">
-                    <option value="">-- Aucun --</option>
-                    <?php foreach ($auteurs as $auteur): ?>
-                        <option value="<?= $auteur['id'] ?>"><?= htmlspecialchars($auteur['nom']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <div>
-                <label for="categorie"><strong>Catégorie :</strong></label>
-                <select id="categorie" name="categorie_id">
-                    <option value="">-- Aucune --</option>
-                    <?php foreach ($categories as $cat): ?>
-                        <option value="<?= $cat['id'] ?>"><?= htmlspecialchars($cat['nom']) ?></option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
-            <button type="button" onclick="showHTML()">Voir le HTML</button>
-            <button type="submit">Enregistrer</button>
-        </form>
-        <section>
-            <h2>Code HTML généré</h2>
-            <pre id="htmlOutput" style="background:#f0f0f0;padding:10px;white-space:pre-wrap;"></pre>
-        </section>
-    </main>
-    <nav>
-        <ul>
-            <li><a href="index.php">Login</a></li>
-            <li><a href="accueil.php">Accueil</a></li>
-            <li><a href="ajout-article.php">Ajouter un article</a></li>
-        </ul>
-    </nav>
     <script>
     function showHTML() {
         var ed = tinymce.get('contenu');
-        document.getElementById('htmlOutput').textContent = ed ? ed.getContent() : '';
-    }
-    function showHTML() {
-        var ed = tinymce.get('contenu');
-        document.getElementById('htmlOutput').textContent = ed ? ed.getContent() : '';
-    }
-    // Fonction d'échappement simple pour le titre/catégorie
-    function escapeHtml(text) {
-        var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-    }
-    function closePreview() {
-        document.getElementById('preview-modal').style.display = 'none';
+        var html = ed ? ed.getContent() : '';
+        // Ajout catégorie, auteur, statut & date
+        var catSel = document.getElementById('categorie_id');
+        var auteurSel = document.getElementById('auteur_id');
+        var cat = catSel ? catSel.options[catSel.selectedIndex].text : '';
+        var auteur = auteurSel ? auteurSel.options[auteurSel.selectedIndex].text : '';
+        var statutSel = document.querySelector('select[name="statut_id"]');
+        var statut = statutSel ? statutSel.options[statutSel.selectedIndex].text : '';
+        var datePub = document.querySelector('input[type="text"][class*="bo-input"][disabled]');
+        var date = datePub ? datePub.value : '';
+        var info = '<div style="margin-bottom:12px;padding:8px 12px;background:#f8f8f8;border-radius:6px;border:1px solid #eee;font-size:1em;color:#333;">' +
+            '<b>Statut :</b> ' + (statut || '-') + '<br>' +
+            '<b>Date de publication :</b> ' + (date || '-') + '<br>' +
+            '<b>Catégorie :</b> ' + (cat || '-') + '<br>' +
+            '<b>Auteur :</b> ' + (auteur || '-') +
+            '</div>';
+        document.getElementById('htmlOutput').textContent = info + html;
     }
     </script>
 </body>

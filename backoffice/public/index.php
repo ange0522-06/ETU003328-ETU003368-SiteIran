@@ -17,7 +17,6 @@ if (isset($_POST['username'], $_POST['password'])) {
     }
 }
 
-// Déconnexion
 if (isset($_GET['logout'])) {
     session_destroy();
     header('Location: index.php');
@@ -29,35 +28,48 @@ if (isset($_GET['logout'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connexion Backoffice</title>
+    <title>Connexion — Backoffice IranInfo</title>
     <meta name="robots" content="noindex, nofollow">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; }
-        .login-box { max-width: 350px; margin: 60px auto; background: #fff; border-radius: 8px; box-shadow: 0 4px 24px #0001; padding: 32px 28px; }
-        h1 { text-align: center; font-size: 1.5rem; margin-bottom: 24px; }
-        label { display: block; margin-bottom: 6px; font-weight: bold; }
-        input[type=text], input[type=password] { width: 100%; padding: 8px 10px; margin-bottom: 18px; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 100%; padding: 10px; background: #0066cc; color: #fff; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
-        .error { color: #c00; margin-bottom: 12px; text-align: center; }
-        .logout { text-align: right; margin-bottom: 10px; }
-    </style>
+    <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-    <div class="login-box">
-        <h1>Connexion Backoffice</h1>
+
+<div class="bo-login-page">
+    <div class="bo-login-card">
+
+        <div class="bo-login-logo">
+            Iran<span>Info</span>
+        </div>
+        <div class="bo-login-sub">Administration — Connexion requise</div>
+
         <?php if ($error): ?>
-            <div class="error">⚠️ <?= htmlspecialchars($error) ?></div>
+            <div class="alert alert-danger">
+                <span>⚠</span>
+                <?= htmlspecialchars($error) ?>
+            </div>
         <?php endif; ?>
+
         <form method="post" autocomplete="off">
-            <label for="username">Utilisateur</label>
-            <input type="text" id="username" name="username" required autofocus placeholder="admin">
-            <label for="password">Mot de passe</label>
-            <input type="password" id="password" name="password" required placeholder="Mot de passe">
-            <button type="submit">Se connecter</button>
+            <div class="bo-field">
+                <label class="bo-label" for="username">Utilisateur</label>
+                <input class="bo-input" type="text" id="username" name="username"
+                       required autofocus placeholder="admin">
+            </div>
+            <div class="bo-field">
+                <label class="bo-label" for="password">Mot de passe</label>
+                <input class="bo-input" type="password" id="password" name="password"
+                       required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+                Se connecter
+            </button>
         </form>
-        <div style="margin-top:18px; font-size:0.95em; color:#666; text-align:center;">
+
+        <div style="margin-top:18px;font-size:12px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:14px;">
             <strong>Démo :</strong> admin / admin123
         </div>
     </div>
+</div>
+
 </body>
 </html>
