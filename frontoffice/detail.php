@@ -398,38 +398,58 @@ $article_date = date('Y-m-d', strtotime($article['date_publication']));
     <main id="main" class="container" role="main">
         <article class="article-header">
             <h1><?= htmlspecialchars(strip_tags($article['titre'])) ?></h1>
-            <div class="article-meta">
-                <div><time datetime="<?= $article_date ?>">Publié le <?= date('d F Y \\à H\\hi', strtotime($article['date_publication'])) ?></time><?php if ($article['auteur']): ?> <span aria-label="par">, par</span> <strong><?= htmlspecialchars($article['auteur']) ?></strong><?php endif; ?></div>
+            <div class="article-meta" style="flex-direction: row; flex-wrap: wrap; gap: 2.5rem; align-items: center;">
+                <div>
+                    <time datetime="<?= $article_date ?>">
+                        <span style="color:#222;font-weight:600;">Publié le</span> <?= date('d/m/Y H:i', strtotime($article['date_publication'])) ?>
+                    </time>
+                </div>
+                <?php if ($article['auteur']): ?>
+                    <div><span style="color:#222;font-weight:600;">Auteur :</span> <span style="color:#444;"><?= htmlspecialchars($article['auteur']) ?></span></div>
+                <?php endif; ?>
                 <?php if ($article['categorie']): ?>
-                    <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" class="category-tag"><?= htmlspecialchars($article['categorie']) ?></a></div>
+                    <div><span style="color:#222;font-weight:600;">Catégorie :</span> <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" class="category-tag" style="margin-bottom:0;vertical-align:middle;"><?= htmlspecialchars($article['categorie']) ?></a></div>
                 <?php endif; ?>
             </div>
         </article>
 
         <article class="article-content">
-            <?php if ($article['photo']): ?>
-                <figure>
+            <?php 
+            // Affichage image principale (chemin corrigé, fallback, style responsive)
+            $imgSrc = $article['photo'] ?? '';
+            if ($imgSrc && strpos($imgSrc, '/') !== 0) {
+                $imgSrc = '/backoffice/uploads/' . $imgSrc;
+            }
+            ?>
+            <figure style="margin:0 0 2.5rem 0;text-align:center;">
+                <?php if ($imgSrc): ?>
                     <img 
-                        src="<?= htmlspecialchars($article['photo']) ?>" 
+                        src="<?= htmlspecialchars($imgSrc) ?>" 
                         alt="<?= htmlspecialchars($article['image_alt'] ?? $article['titre']) ?>"
                         class="article-image"
+                        style="max-width:100%;height:auto;max-height:420px;object-fit:cover;border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,0.10);margin-bottom:0.5rem;"
                         loading="lazy"
                         decoding="async"
                         <?php if ($article['largeur'] && $article['hauteur']): ?>
                             width="<?= intval($article['largeur']) ?>"
                             height="<?= intval($article['hauteur']) ?>"
                         <?php endif; ?>
+                        onerror="this.style.display='none';this.parentNode.querySelector('.img-fallback').style.display='block';"
                     >
-                    <?php if ($article['image_alt']): ?>
-                        <figcaption><?= htmlspecialchars($article['image_alt']) ?></figcaption>
-                    <?php endif; ?>
-                </figure>
-            <?php endif; ?>
-            
-            <?php 
-            // Afficher le contenu sans les balises HTML
-            echo strip_tags($article['contenu']);
-            ?>
+                    <div class="img-fallback" style="display:none;width:100%;height:220px;background:#eee;border-radius:10px;line-height:220px;color:#aaa;font-size:1.2rem;">Image non disponible</div>
+                <?php else: ?>
+                    <div class="img-fallback" style="width:100%;height:220px;background:#eee;border-radius:10px;line-height:220px;color:#aaa;font-size:1.2rem;">Image non disponible</div>
+                <?php endif; ?>
+                <?php if ($article['image_alt']): ?>
+                    <figcaption><?= htmlspecialchars($article['image_alt']) ?></figcaption>
+                <?php endif; ?>
+            </figure>
+            <div style="margin:0 auto;max-width:700px;">
+                <?php 
+                // Afficher le contenu AVEC le HTML (mise en forme TinyMCE)
+                echo $article['contenu']; 
+                ?>
+            </div>
         </article>
 
         <div class="article-footer">

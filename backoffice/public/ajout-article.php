@@ -6,13 +6,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contenu = $_POST['contenu'] ?? '';
     $auteur_id = $_POST['auteur_id'] ?? null;
     $categorie_id = $_POST['categorie_id'] ?? null;
-    $statut_id = 2; // Brouillon par défaut
+    $statut_id = 2;
 
     $stmt = $pdo->prepare('INSERT INTO article (titre, contenu, auteur_id, categorie_id, statut_id) VALUES (?, ?, ?, ?, ?)');
     $stmt->execute([$titre, $contenu, $auteur_id, $categorie_id, $statut_id]);
     $article_id = $pdo->lastInsertId();
 
-    // Extraction de la première image pour image_id
     $image_id = null;
     if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $contenu, $m)) {
         $img_src = $m[1];
@@ -26,12 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmtImg->execute(['%' . $filename]);
             $row = $stmtImg->fetch(PDO::FETCH_ASSOC);
         }
+
         if ($row) {
             $image_id = $row['id'];
             $pdo->prepare('UPDATE article SET image_id = ? WHERE id = ?')->execute([$image_id, $article_id]);
         }
     }
-    echo '<p style="color:green;">Article ajouté avec succès !</p>';
+
+    echo 'OK';
+    exit;
 }
 
 $auteurs = $pdo->query('SELECT id, nom FROM auteur')->fetchAll(PDO::FETCH_ASSOC);
@@ -41,6 +43,8 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
+        
     <meta charset="UTF-8">
     <title>Ajouter un article | Backoffice</title>
     <meta name="description" content="Ajouter un nouvel article dans le backoffice IranInfo. Saisie du titre, contenu, auteur, catégorie et image.">
@@ -70,6 +74,31 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         }
     </style>
     <script>
+        tinymce.init({
+        selector: '#titre',
+        menubar: 'file edit view insert format tools table help',
+        plugins: 'lists link image preview table code',
+        toolbar: 'undo redo | blocks | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image | code preview',
+
+        height: 200,
+
+        branding: false,
+        statusbar: true,
+        promotion: false,
+        license_key: 'gpl',
+
+        setup: function (editor) {
+            editor.on('input', function () {
+                let text = editor.getContent({ format: 'text' });
+
+                if (text.length > 255) {
+                    let truncated = text.substring(0, 255);
+                    editor.setContent(truncated);
+                }
+            });
+        }
+    });
+    // TinyMCE pour le contenu (barre complète)
     tinymce.init({
         selector: '#contenu',
         plugins: 'lists link image preview',
@@ -296,23 +325,26 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
                 
                 <!-- Boutons en haut à droite (comme demandé) -->
                 <div class="bo-topbar-actions" style="display:flex; gap:10px; align-items:center;">
-                    <a href="ajout-article.php" class="btn btn-primary">+ Nouveau article</a>
-                    <button type="submit" form="article-form" class="btn btn-success" style="min-width:160px;">
+                    <a href="ajout-article.php" class="btn btn-primary">+ Nouvel article</a>
+                    <div id="success-message" style="margin-bottom:15px;font-weight:bold;"></div>
+                    <button type="submit" form="article-form" class="btn btn-success" style="min-width:100px;">
                         Enregistrer
                     </button>
                 </div>
             </div>
 
             <div class="bo-content">
-                <form id="article-form" method="post">
+                <form id="article-form" method="post" novalidate>
                     <!-- TinyMCE Toolbar déplacé en haut -->
                     <div class="bo-card" style="margin-bottom:20px;">
                         <div class="bo-card-header">
                             Outils de mise en forme (Titre & Contenu)
                         </div>
-                        <div class="bo-card-body" style="padding:12px 18px;">
+                        <div class="bo-card-body" style="padding:12px 18px; display: flex; flex-direction: column; gap: 18px;">
+                            <label for="titre" class="bo-label" style="font-weight:600;">Titre de l'article *</label>
+                            <textarea id="titre" name="titre" required class="bo-input" style="min-height:40px; font-size:1.1em; margin-bottom:10px;"  placeholder="Titre de l'article"></textarea>
+                            <label for="contenu" class="bo-label" style="font-weight:600;">Contenu de l'article *</label>
                             <textarea id="contenu" name="contenu" style="visibility:hidden; height:0;"></textarea>
-                            <!-- TinyMCE va remplacer cette zone et afficher sa barre d'outils ici -->
                         </div>
                     </div>
 
@@ -397,6 +429,61 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
             '</div>';
         document.getElementById('htmlOutput').textContent = info + html;
     }
-    </script>
+
+    // Synchronise TinyMCE avant soumission du formulaire et envoie AJAX
+    document.getElementById('article-form').addEventListener('submit', function(e) {
+        e.preventDefault(); // stop reload
+
+        if (window.tinymce) {
+            tinymce.triggerSave();
+        }
+
+        // Validation JS
+        var titre = tinymce.get('titre') ? tinymce.get('titre').getContent({format:'text'}).trim() : '';
+        var contenu = tinymce.get('contenu') ? tinymce.get('contenu').getContent({format:'text'}).trim() : '';
+        var cat = document.getElementById('categorie_id').value;
+        if (!titre) {
+            document.getElementById('success-message').innerHTML = "<span style='color:red;'>❌ Le titre est obligatoire.</span>";
+            if (tinymce.get('titre')) tinymce.get('titre').focus();
+            return;
+        }
+        if (!contenu) {
+            document.getElementById('success-message').innerHTML = "<span style='color:red;'>❌ Le contenu est obligatoire.</span>";
+            if (tinymce.get('contenu')) tinymce.get('contenu').focus();
+            return;
+        }
+        if (!cat) {
+            document.getElementById('success-message').innerHTML = "<span style='color:red;'>❌ La catégorie est obligatoire.</span>";
+            document.getElementById('categorie_id').focus();
+            return;
+        }
+
+        let form = this;
+        let formData = new FormData(form);
+
+        fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(res => {
+            if (res.trim() === 'OK') {
+                document.getElementById('success-message').innerHTML =
+                    "<span style='color:green;'>✅ Article enregistré avec succès !</span>";
+
+                form.reset();
+
+                if (tinymce.get('contenu')) tinymce.get('contenu').setContent('');
+                if (tinymce.get('titre')) tinymce.get('titre').setContent('');
+            } else {
+                document.getElementById('success-message').innerHTML =
+                    "<span style='color:red;'>❌ Erreur serveur</span>";
+            }
+        })
+        .catch(() => {
+            document.getElementById('success-message').innerHTML =
+                "<span style='color:red;'>❌ Erreur réseau</span>";
+        });
+    });
 </body>
 </html>

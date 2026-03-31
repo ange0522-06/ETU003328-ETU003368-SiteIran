@@ -12,7 +12,7 @@ if (isset($_POST['action'], $_POST['article_id'])) {
     $id = (int)$_POST['article_id'];
     if ($_POST['action'] === 'publier') {
         // Statut publié (id=1)
-        $pdo->prepare('UPDATE article SET statut_id = 1 WHERE id = ?')->execute([$id]);
+        $pdo->prepare('UPDATE article SET statut_id = 1, date_publiee = NOW() WHERE id = ?')->execute([$id]);
     } elseif ($_POST['action'] === 'archiver') {
         // Statut archivé (id=3)
         $pdo->prepare('UPDATE article SET statut_id = 3 WHERE id = ?')->execute([$id]);
@@ -20,6 +20,21 @@ if (isset($_POST['action'], $_POST['article_id'])) {
 }
 
 $articles = get_articles();
+
+// Traitement de l'édition
+if (isset($_POST['edit_id'])) {
+    $edit_id = (int)$_POST['edit_id'];
+    $edit_titre = trim($_POST['edit_titre'] ?? '');
+    $edit_categorie = (int)($_POST['edit_categorie'] ?? 0);
+    $edit_contenu = trim($_POST['edit_contenu'] ?? '');
+    $stmt = $pdo->prepare('UPDATE article SET titre = ?, categorie_id = ?, contenu = ? WHERE id = ?');
+    $stmt->execute([$edit_titre, $edit_categorie, $edit_contenu, $edit_id]);
+    // Rafraîchir les articles après édition
+    $articles = get_articles();
+}
+
+// Récupérer les catégories pour l'édition
+$categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -75,57 +90,84 @@ $articles = get_articles();
                 <div class="bo-breadcrumb">Backoffice › <span>Articles</span></div>
             </div>
             <div class="bo-topbar-actions">
-                <div class="bo-search">
-                    <input type="text" placeholder="Rechercher..." id="searchInput" oninput="filterTable()">
-                    <button type="button">Chercher</button>
-                </div>
+                <form class="bo-search" style="width:350px;max-width:100%;display:flex;gap:8px;" onsubmit="event.preventDefault();filterCards();">
+                    <input type="text" placeholder="Rechercher..." id="searchInput" style="width:100%;padding:10px 14px;font-size:15px;border-radius:6px;border:1px solid #ccc;" oninput="filterCards()">
+                    <button type="submit" class="btn btn-primary" style="padding:10px 18px;font-size:15px;">Rechercher</button>
+                </form>
                 <a href="ajout-article.php" class="btn btn-primary">+ Nouvel article</a>
             </div>
         </div>
 
         <div class="bo-content">
-            <div style="display:flex;flex-wrap:wrap;gap:24px;">
+            <div id="articlesGrid" style="display:flex;flex-direction:column;gap:40px;align-items:center;">
             <?php foreach ($articles as $article): ?>
-                <div class="bo-card" style="width:420px;flex:0 0 420px;display:flex;flex-direction:column;justify-content:space-between;">
-                    <div>
-                        <div class="bo-card-header" style="font-size:1.2em;font-weight:bold;">
-                            <?= htmlspecialchars(strip_tags($article['titre'])) ?>
+                <div class="article-card bo-card" data-search="<?= htmlspecialchars(strtolower($article['titre'].' '.$article['auteur'].' '.$article['categorie'].' '.$article['contenu'])) ?>" style="display:flex;flex-direction:row;align-items:center;gap:32px;width:90%;max-width:1100px;min-height:180px;padding:32px 40px;box-shadow:0 2px 16px rgba(0,0,0,0.07);">
+                    <?php if (isset($_POST['edit']) && $_POST['edit'] == $article['id']): ?>
+                        <form method="post" style="display:flex;flex-direction:column;gap:10px;width:100%;">
+                            <input type="hidden" name="edit_id" value="<?= $article['id'] ?>">
+                            <label>Titre : <input type="text" name="edit_titre" value="<?= htmlspecialchars($article['titre']) ?>" required style="width:100%;padding:8px;"></label>
+                            <label>Catégorie :
+                                <select name="edit_categorie" style="width:100%;padding:8px;">
+                                    <?php foreach ($categories as $cat): ?>
+                                        <option value="<?= $cat['id'] ?>" <?= $cat['id'] == $article['categorie_id'] ? 'selected' : '' ?>><?= htmlspecialchars($cat['nom']) ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </label>
+                            <label>Contenu :
+                                <textarea name="edit_contenu" rows="5" style="width:100%;padding:8px;resize:vertical;"><?= htmlspecialchars($article['contenu']) ?></textarea>
+                            </label>
+                            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                                <button type="submit" class="btn btn-success btn-sm">Enregistrer</button>
+                                <button type="button" class="btn btn-ghost btn-sm" onclick="window.location.href=window.location.href">Annuler</button>
+                            </div>
+                        </form>
+                    <?php else: ?>
+                        <?php
+                        $img = '';
+                        if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $article['contenu'], $m)) {
+                            $img = '<img src="' . htmlspecialchars($m[1]) . '" alt="image1" style="width:120px;height:90px;object-fit:cover;border-radius:6px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-right:24px;">';
+                        } else {
+                            $img = '<div style="width:120px;height:90px;background:#f0f0f0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#aaa;font-size:1.1em;margin-right:24px;">image1</div>';
+                        }
+                        ?>
+                        <?= $img ?>
+                        <div style="flex:1;display:flex;flex-direction:column;gap:10px;">
+                            <div style="font-size:1.1em;font-weight:600;color:#444;"><?= htmlspecialchars(strip_tags($article['titre'])) ?> <?= mb_strlen(strip_tags($article['contenu'])) > 20 ? '...' : '' ?></div>
+                            <a href="detail-article.php?id=<?= $article['id'] ?>" target="_blank" style="font-weight:700;color:#222;text-decoration:none;font-size:1.05em;">Lire l'article →</a>
+                            <div style="font-size:0.98em;color:#666;">
+                                Publié le <?= htmlspecialchars($article['date_publiee'] ? date('d/m/Y H:i', strtotime($article['date_publiee'])) : '—') ?>
+                            </div>
+                            <div style="margin-top:4px;">Catégorie : <span style="background:#ffc107;color:#222;padding:6px 18px;border-radius:8px;font-weight:600;font-size:0.98em;display:inline-block;"><?= htmlspecialchars($article['categorie'] ?? '—') ?></span></div>
+                            <div style="margin-top:8px;">
+                                <?php
+                                $s = strtolower($article['statut'] ?? '');
+                                if ($s === 'publié' || $s === 'publie') {
+                                    echo '<span class="badge badge-publie">Publié</span>';
+                                } elseif ($s === 'brouillon') {
+                                    echo '<span class="badge badge-brouillon">Brouillon</span>';
+                                } else {
+                                    echo '<span class="badge badge-archive">' . htmlspecialchars($article['statut'] ?? 'Inconnu') . '</span>';
+                                }
+                                ?>
+                            </div>
+                            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+                                <form method="post" style="margin:0;">
+                                    <input type="hidden" name="edit" value="<?= $article['id'] ?>">
+                                    <button type="submit" class="btn btn-ghost btn-sm">Éditer</button>
+                                </form>
+                                <form method="post" style="margin:0;">
+                                    <input type="hidden" name="article_id" value="<?= $article['id'] ?>">
+                                    <?php
+                                    $s = strtolower($article['statut'] ?? '');
+                                    if ($s === 'brouillon') {
+                                        echo '<button type="submit" name="action" value="publier" class="btn btn-success btn-sm">Publier</button>';
+                                        echo '<button type="submit" name="action" value="archiver" class="btn btn-warning btn-sm">Archiver</button>';
+                                    }
+                                    ?>
+                                </form>
+                            </div>
                         </div>
-                        <div style="margin:8px 0 8px 0;">
-                            <span style="color:#888;font-size:13px;">Auteur :</span> <?= htmlspecialchars($article['auteur'] ?? '—') ?>
-                            &nbsp;|&nbsp;
-                            <span style="color:#888;font-size:13px;">Catégorie :</span> <?= htmlspecialchars($article['categorie'] ?? '—') ?>
-                        </div>
-                        <div style="color:#888;font-size:12px;">Date : <?= htmlspecialchars($article['date_publication'] ?? '—') ?></div>
-                        <div style="margin:8px 0;">
-                            <?php
-                            $s = strtolower($article['statut'] ?? '');
-                            if ($s === 'publié' || $s === 'publie') {
-                                echo '<span class="badge badge-publie">Publié</span>';
-                            } elseif ($s === 'brouillon') {
-                                echo '<span class="badge badge-brouillon">Brouillon</span>';
-                            } else {
-                                echo '<span class="badge badge-archive">' . htmlspecialchars($article['statut'] ?? 'Inconnu') . '</span>';
-                            }
-                            ?>
-                        </div>
-                        <div style="margin-bottom:8px;">
-                            <?php
-                            if (preg_match('/<img[^>]+src=["\']([^"\']+)["\']/i', $article['contenu'], $m)) {
-                                echo '<img src="' . htmlspecialchars($m[1]) . '" alt="' . htmlspecialchars(strip_tags($article['titre'])) . '" style="width:100%;max-width:320px;height:120px;object-fit:cover;border-radius:4px;display:block;margin-bottom:8px;">';
-                            }
-                            ?>
-                        </div>
-                        <div style="background:#f8f8f8;border-radius:6px;padding:12px 14px;min-height:60px;max-height:120px;overflow:auto;">
-                            <?= $article['contenu'] ?>
-                        </div>
-                    </div>
-                    <form method="post" style="margin-top:14px;display:flex;gap:10px;">
-                        <input type="hidden" name="article_id" value="<?= $article['id'] ?>">
-                        <button type="submit" name="action" value="publier" class="btn btn-success btn-sm">Publier</button>
-                        <button type="submit" name="action" value="archiver" class="btn btn-warning btn-sm">Archiver</button>
-                        <a href="ajout-article.php?id=<?= $article['id'] ?? '' ?>" class="btn btn-ghost btn-sm">Éditer</a>
-                    </form>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
             </div>
@@ -134,10 +176,10 @@ $articles = get_articles();
 </div>
 
 <script>
-function filterTable() {
+function filterCards() {
     var q = document.getElementById('searchInput').value.toLowerCase();
-    document.querySelectorAll('#articlesTable tbody tr').forEach(function(row) {
-        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    document.querySelectorAll('.article-card').forEach(function(card) {
+        card.style.display = card.getAttribute('data-search').includes(q) ? '' : 'none';
     });
 }
 </script>
