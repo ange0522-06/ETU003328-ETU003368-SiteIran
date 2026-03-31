@@ -2,11 +2,15 @@ RewriteEngine On
 RewriteCond %{SCRIPT_FILENAME} !-d
 RewriteCond %{SCRIPT_FILENAME} !-f
 
-# Rewrite URL pour les articles: /articles/article-titre-id.html -> index.php?id=id
-RewriteRule ^articles/article-([a-z0-9-]+)-([0-9]+)\.html$ index.php?slug=$1&id=$2 [QSA,L]
+# Rewrite URL pour les articles: /articles/article-titre-id.html -> detail.php?id=id
+RewriteRule ^articles/article-([a-z0-9-]+)-([0-9]+)\.html$ detail.php?slug=$1&id=$2 [QSA,L]
 
 # Rewrite URL pour les catégories: /categorie/nom-id -> index.php?categorie=id
 RewriteRule ^categorie/([a-z0-9-]+)-([0-9]+)/?$ index.php?categorie=$2 [QSA,L]
 
+# Rewrite URL pour la recherche: /recherche -> search.php
+RewriteRule ^recherche/?$ search.php [QSA,L]
+
 # Rewrite URL pour les pages statiques
 RewriteRule ^([a-z0-9-]+)/?$ index.php?page=$1 [QSA,L]
+

@@ -21,7 +21,7 @@ $query = $pdo->prepare('
     LEFT JOIN auteur au ON a.auteur_id = au.id
     LEFT JOIN statut s ON a.statut_id = s.id
     LEFT JOIN image i ON a.image_id = i.id
-    WHERE a.id = ? AND s.nom = "Publié"
+    WHERE a.id = ? AND a.statut_id = 1
 ');
 
 $query->execute([$id]);
@@ -123,15 +123,20 @@ $meta_image = $article['photo'] ? htmlspecialchars($article['photo']) : '';
         }
         .article-meta {
             display: flex;
-            gap: 2rem;
-            margin-bottom: 2rem;
+            flex-direction: column;
+            gap: 0.5rem;
             font-size: 0.9rem;
             color: #666;
-            flex-wrap: wrap;
         }
-        .article-meta span {
-            display: flex;
-            align-items: center;
+        .article-meta div {
+            margin-bottom: 0.2rem;
+        }
+        .article-meta a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .article-meta a:hover {
+            text-decoration: underline;
         }
         .article-image {
             width: 100%;
@@ -199,32 +204,14 @@ $meta_image = $article['photo'] ? htmlspecialchars($article['photo']) : '';
                 <li><a href="/">Accueil</a></li>
                 <li><a href="/articles">Articles</a></li>
                 <li><a href="/categories">Catégories</a></li>
-                <li><a href="/contact">Contact</a></li>
+                <li><a href="/recherche">Recherche</a></li>
             </ul>
         </nav>
     </header>
 
     <main class="container">
-        <div class="breadcrumb">
-            <a href="/">Accueil</a> > 
-            <?php if ($article['categorie']): ?>
-                <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>">
-                    <?= htmlspecialchars($article['categorie']) ?>
-                </a> > 
-            <?php endif; ?>
-            <span><?= htmlspecialchars($article['titre']) ?></span>
-        </div>
-
         <article class="article-header">
-            <h1><?= htmlspecialchars($article['titre']) ?></h1>
-            
-            <div class="article-meta">
-                <span>📅 <?= date('d F Y', strtotime($article['date_publication'])) ?></span>
-                <span>✍️ <?= htmlspecialchars($article['auteur']) ?></span>
-                <?php if ($article['categorie']): ?>
-                    <span>📁 <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>"><?= htmlspecialchars($article['categorie']) ?></a></span>
-                <?php endif; ?>
-            </div>
+            <h1><?= htmlspecialchars(strip_tags($article['titre'])) ?></h1>
         </article>
 
         <article class="article-content">
@@ -244,9 +231,16 @@ $meta_image = $article['photo'] ? htmlspecialchars($article['photo']) : '';
             <?php endif; ?>
             
             <?php 
-            // Afficher le contenu HTML sécurisé (en supposant que c'est du HTML valide)
-            echo $article['contenu'];
+            // Afficher le contenu sans les balises HTML
+            echo strip_tags($article['contenu']);
             ?>
+
+            <div class="article-meta" style="margin-top: 3rem; border-top: 1px solid #ddd; padding-top: 2rem;">
+                <div>Publié <?= date('\\l\\e d F Y \\à H\\hi', strtotime($article['date_publication'])) ?><?php if ($article['auteur']): ?>, par <?= htmlspecialchars($article['auteur']) ?><?php endif; ?></div>
+                <?php if ($article['categorie']): ?>
+                    <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>"><?= htmlspecialchars($article['categorie']) ?></a></div>
+                <?php endif; ?>
+            </div>
         </article>
     </main>
 

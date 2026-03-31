@@ -84,8 +84,8 @@ switch ($page) {
             color: #1a1a1a;
         }
         .articles-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 2rem;
             margin-bottom: 2rem;
         }
@@ -96,26 +96,31 @@ switch ($page) {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             transition: transform 0.3s, box-shadow 0.3s;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
+            gap: 1.5rem;
+            padding: 1.5rem;
         }
         .article-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .article-card img {
-            width: 100%;
-            height: 200px;
+            width: 200px;
+            height: 150px;
             object-fit: cover;
+            flex-shrink: 0;
+            border-radius: 4px;
         }
         .article-card-content {
-            padding: 1.5rem;
+            padding: 0;
             flex: 1;
             display: flex;
             flex-direction: column;
         }
         .article-card h2 {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+            font-weight: bold;
         }
         .article-card a {
             color: #1a1a1a;
@@ -128,18 +133,31 @@ switch ($page) {
         .article-card-meta {
             font-size: 0.85rem;
             color: #666;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.6;
+        }
+        .article-card-meta div {
+            margin-bottom: 0.2rem;
         }
         .article-card-excerpt {
             flex: 1;
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
             color: #555;
             font-size: 0.95rem;
         }
+        .read-more {
+            display: inline-block;
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s;
+            font-size: 0.95rem;
+        }
+        .read-more:hover {
+            color: #0056b3;
+        }
         .article-card-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: none;
         }
         .read-more {
             display: inline-block;
@@ -187,6 +205,34 @@ switch ($page) {
             padding: 2rem;
             color: #666;
         }
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .category-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            color: inherit;
+            cursor: pointer;
+        }
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .category-card h2 {
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+        .category-card p {
+            color: #666;
+        }
         footer {
             background: #1a1a1a;
             color: white;
@@ -198,8 +244,11 @@ switch ($page) {
             nav ul {
                 gap: 1rem;
             }
-            .articles-grid {
-                grid-template-columns: 1fr;
+            .article-card {
+                flex-direction: column;
+            }
+            .article-card img {
+                width: 100%;
             }
         }
     </style>
@@ -212,7 +261,7 @@ switch ($page) {
                 <li><a href="/" class="<?= $page === 'accueil' ? 'active' : '' ?>">Accueil</a></li>
                 <li><a href="/articles" class="<?= $page === 'articles' ? 'active' : '' ?>">Articles</a></li>
                 <li><a href="/categories" class="<?= $page === 'categories' ? 'active' : '' ?>">Catégories</a></li>
-                <li><a href="/contact">Contact</a></li>
+                <li><a href="/recherche">Recherche</a></li>
             </ul>
         </nav>
     </header>
@@ -246,17 +295,15 @@ switch ($page) {
             $cat_query = $pdo->query("SELECT * FROM categorie");
             $categories = $cat_query->fetchAll();
             ?>
-            <div class="articles-grid">
+            <div class="category-grid">
                 <?php foreach ($categories as $cat): ?>
                     <?php
                     $count_query = $pdo->query("SELECT COUNT(*) as total FROM article WHERE categorie_id = {$cat['id']} AND statut_id = 1");
                     $count = $count_query->fetch()['total'];
                     ?>
-                    <a href="/categorie/<?= strtolower(str_replace(' ', '-', $cat['nom'])) ?>-<?= $cat['id'] ?>" style="text-decoration: none;">
-                        <div style="background: white; padding: 2rem; border-radius: 8px; text-align: center; cursor: pointer;">
-                            <h2 style="color: #1a1a1a; margin-bottom: 0.5rem;"><?= htmlspecialchars($cat['nom']) ?></h2>
-                            <p style="color: #666;"><?= $count ?> article<?= $count > 1 ? 's' : '' ?></p>
-                        </div>
+                    <a href="/categorie/<?= strtolower(str_replace(' ', '-', $cat['nom'])) ?>-<?= $cat['id'] ?>" class="category-card">
+                        <h2><?= htmlspecialchars($cat['nom']) ?></h2>
+                        <p><?= $count ?> article<?= $count > 1 ? 's' : '' ?></p>
                     </a>
                 <?php endforeach; ?>
             </div>
@@ -312,21 +359,16 @@ switch ($page) {
                         <div class="article-card-content">
                             <h2>
                                 <a href="<?= $article_url ?>">
-                                    <?= htmlspecialchars($article['titre']) ?>
+                                    <?= htmlspecialchars(strip_tags($article['titre'])) ?>
                                 </a>
                             </h2>
-                            <div class="article-card-meta">
-                                <?= date('d F Y', strtotime($article['date_publication'])) ?> • 
-                                <?= htmlspecialchars($article['auteur']) ?>
-                            </div>
                             <p class="article-card-excerpt"><?= htmlspecialchars($excerpt) ?></p>
-                            <div class="article-card-footer">
+                            <a href="<?= $article_url ?>" class="read-more">Lire →</a>
+                            <div class="article-card-meta" style="margin-top: auto; margin-bottom: 0;">
+                                <div style="margin-top: 1rem;">Publié <?= date('\\l\\e d F Y \\à H\\hi', strtotime($article['date_publication'])) ?><?php if ($article['auteur']): ?>, par <?= htmlspecialchars($article['auteur']) ?><?php endif; ?></div>
                                 <?php if ($article['categorie']): ?>
-                                    <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" class="category-tag">
-                                        <?= htmlspecialchars($article['categorie']) ?>
-                                    </a>
+                                    <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" style="color: #007bff; text-decoration: none;"><?= htmlspecialchars($article['categorie']) ?></a></div>
                                 <?php endif; ?>
-                                <a href="<?= $article_url ?>" class="read-more">Lire →</a>
                             </div>
                         </div>
                     </article>
