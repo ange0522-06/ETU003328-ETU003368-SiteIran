@@ -27,11 +27,12 @@ $articles = get_articles();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des articles — Backoffice IranInfo</title>
+    <meta name="description" content="Liste et gestion des articles du backoffice IranInfo. Filtrer, publier, archiver ou éditer les articles.">
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="../assets/style.css">
 </head>
 <body>
-
+<a href="#main-content" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;background:#fff;color:#222;z-index:1000;">Aller au contenu principal</a>
 <div class="bo-layout">
 
     <!-- ── SIDEBAR ── -->
@@ -66,7 +67,7 @@ $articles = get_articles();
     </aside>
 
     <!-- ── MAIN ── -->
-    <div class="bo-main">
+    <main id="main-content" class="bo-main" tabindex="-1" aria-label="Contenu principal">
 
         <div class="bo-topbar">
             <div>
@@ -129,8 +130,7 @@ $articles = get_articles();
             <?php endforeach; ?>
             </div>
         </div>
-
-    </div>
+    </main>
 </div>
 
 <script>

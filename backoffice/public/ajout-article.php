@@ -43,6 +43,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
 <head>
     <meta charset="UTF-8">
     <title>Ajouter un article | Backoffice</title>
+    <meta name="description" content="Ajouter un nouvel article dans le backoffice IranInfo. Saisie du titre, contenu, auteur, catégorie et image.">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="../assets/style.css">
@@ -244,6 +245,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
     </script>
 </head>
 <body>
+<a href="#main-content" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;background:#fff;color:#222;z-index:1000;">Aller au contenu principal</a>
 
     <!-- Modal de redimensionnement -->
     <div id="resize-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
@@ -288,7 +290,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
         </aside>
 
         <!-- MAIN -->
-        <div class="bo-main">
+        <main id="main-content" class="bo-main" tabindex="-1" aria-label="Contenu principal">
             <div class="bo-topbar">
                 <div class="bo-page-title">Ajouter un article</div>
                 
@@ -372,7 +374,7 @@ $categories = $pdo->query('SELECT id, nom FROM categorie')->fetchAll(PDO::FETCH_
                 </form>
             </div>
         </div>
-    </div>
+    </main>
 
     <script>
     function showHTML() {

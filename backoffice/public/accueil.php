@@ -18,11 +18,13 @@ $nb_categories= $pdo->query("SELECT COUNT(*) FROM categorie")->fetchColumn();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Accueil — Backoffice IranInfo</title>
+    <meta name="description" content="Tableau de bord du backoffice IranInfo. Gérer les articles, catégories et utilisateurs.">
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="../assets/style.css">
 </head>
-<body>
 
+<body>
+<a href="#main-content" class="skip-link" style="position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;background:#fff;color:#222;z-index:1000;">Aller au contenu principal</a>
 <div class="bo-layout">
 
     <!-- ── SIDEBAR ── -->
@@ -57,7 +59,7 @@ $nb_categories= $pdo->query("SELECT COUNT(*) FROM categorie")->fetchColumn();
     </aside>
 
     <!-- ── MAIN ── -->
-    <div class="bo-main">
+    <main id="main-content" class="bo-main" tabindex="-1" aria-label="Contenu principal">
 
         <div class="bo-topbar">
             <div>
@@ -151,7 +153,7 @@ $nb_categories= $pdo->query("SELECT COUNT(*) FROM categorie")->fetchColumn();
             </div>
 
         </div><!-- /bo-content -->
-    </div><!-- /bo-main -->
+    </main><!-- /bo-main -->
 </div><!-- /bo-layout -->
 
 </body>
