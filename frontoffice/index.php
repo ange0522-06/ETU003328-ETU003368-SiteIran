@@ -7,6 +7,10 @@ $categorie_id = $_GET['categorie'] ?? null;
 $current_page = $_GET['p'] ?? 1;
 $items_per_page = 12;
 
+// Initialiser les variables de filtre de date AVANT toute utilisation
+$date_min = $_GET['date_min'] ?? '';
+$date_max = $_GET['date_max'] ?? '';
+
 // Générer les balises meta selon la page
 $meta_title = 'Site Iran - Actualités et Analyses';
 $meta_description = 'Découvrez les dernières actualités sur l\'Iran avec nos articles détaillés et analyses en profondeur.';
@@ -448,8 +452,10 @@ switch ($page) {
     <header role="banner">
         <nav role="navigation" aria-label="Navigation principale">
             <div class="logo-section">
-                <h1>📰 SITE IRAN</h1>
-                <p class="tagline">Actualités • Analyses • Reportages</p>
+                <div style="font-size:1.7rem;font-weight:700;color:#fff;line-height:1.1;">
+                    Iran<span style="color:#ffc107;">Info</span>
+                </div>
+                <div style="font-size:0.95rem;color:#bdbdbd;margin-top:2px;">FrontOffice</div>
             </div>
             <ul>
                 <li><a href="/" class="<?= $page === 'accueil' ? 'active' : '' ?>" aria-label="Accueil">Accueil</a></li>
@@ -487,6 +493,20 @@ switch ($page) {
                     <h1>Tous les articles</h1>
                 <?php endif; ?>
 
+                <!-- Formulaire filtre date publication -->
+                <form method="get" style="margin-bottom:2.5rem;display:flex;gap:32px;align-items:end;background:#fff;padding:18px 28px;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);max-width:700px;">
+                    <input type="hidden" name="page" value="articles">
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <label for="date_min" style="font-size:1em;font-weight:500;color:#222;">Date de publication (min)</label>
+                        <input type="date" name="date_min" id="date_min" value="<?= htmlspecialchars($date_min) ?>" style="padding:7px 12px;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:6px;">
+                        <label for="date_max" style="font-size:1em;font-weight:500;color:#222;">Date de publication (max)</label>
+                        <input type="date" name="date_max" id="date_max" value="<?= htmlspecialchars($date_max) ?>" style="padding:7px 12px;border-radius:6px;border:1px solid #ccc;font-size:1em;">
+                    </div>
+                    <button type="submit" style="padding:10px 24px;font-size:1em;background:#ffc107;color:#222;border:none;border-radius:6px;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.07);cursor:pointer;transition:background 0.2s;">Filtrer</button>
+                </form>
+
         <?php elseif ($page === 'categories'): ?>
             <section>
                 <h1>Explorez nos catégories</h1>
@@ -522,6 +542,12 @@ switch ($page) {
 
         if ($categorie_id) {
             $sql .= ' AND a.categorie_id = ' . intval($categorie_id);
+        }
+        if ($date_min) {
+            $sql .= " AND a.date_publiee >= '" . addslashes($date_min) . " 00:00:00'";
+        }
+        if ($date_max) {
+            $sql .= " AND a.date_publiee <= '" . addslashes($date_max) . " 23:59:59'";
         }
 
         $sql .= ' ORDER BY a.date_publication DESC';
@@ -571,7 +597,9 @@ switch ($page) {
                             <a href="<?= $article_url ?>" class="read-more" aria-label="Lire l'article: <?= htmlspecialchars(strip_tags($article['titre'])) ?>">Lire l'article →</a>
                             <div class="article-card-meta" style="margin-top: auto; margin-bottom: 0;">
                                 <div style="margin-top: 1rem;">
-                                    <time datetime="<?= date('Y-m-d', strtotime($article['date_publication'])) ?>">Publié le <?= $article_date ?></time><?php if ($article['auteur']): ?> <span aria-label="par">, par</span> <strong><?= htmlspecialchars($article['auteur']) ?></strong><?php endif; ?>
+                                    <time datetime="<?= $article['date_publiee'] ? date('Y-m-d\TH:i', strtotime($article['date_publiee'])) : '' ?>">
+                                        Publié le <?= $article['date_publiee'] ? date('d/m/Y H:i', strtotime($article['date_publiee'])) : '—' ?>
+                                    </time><?php if ($article['auteur']): ?> <span aria-label="par">, par</span> <strong><?= htmlspecialchars($article['auteur']) ?></strong><?php endif; ?>
                                 </div>
                                 <?php if ($article['categorie']): ?>
                                     <div>Catégorie : <a href="/categorie/<?= strtolower(str_replace(' ', '-', $article['categorie'])) ?>-<?= $article['categorie_id'] ?>" class="category-tag"><?= htmlspecialchars($article['categorie']) ?></a></div>
